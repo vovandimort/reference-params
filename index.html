@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Передача параметрів за посиланням</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout: one column, sticky step bar on top, fixed prev/next bar at the bottom */
+  --bg:#f1f5f6; --surface:#ffffff; --ink:#14232b; --muted:#566972; --line:#d6e0e4;
+  --accent:#0b6e6e; --accent-ink:#ffffff; --accent-soft:#dcf0ef;
+  --warm:#a84f08; --warm-soft:#fcecd6;
+  --good:#17803d; --good-soft:#dcf3e3; --bad:#b42323; --bad-soft:#fbe0e0;
+  --code-bg:#10222a; --code-ink:#e6f1f2; --code-dim:#6f8993; --code-kw:#7dd3c8; --code-num:#f6c177; --code-c:#7f98a2; --code-hl:#1d3f4a; --amp:#ffb454;
+  --f-body:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0b1418; --surface:#13222a; --ink:#e4eef0; --muted:#93a8b0; --line:#25383f;
+    --accent:#4fd1c5; --accent-ink:#06201f; --accent-soft:#143a3b;
+    --warm:#f5a85a; --warm-soft:#3a2a14;
+    --good:#4ade80; --good-soft:#12301d; --bad:#f87171; --bad-soft:#3a1717;
+    --code-bg:#08110f; --code-hl:#1b3a44;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0b1418; --surface:#13222a; --ink:#e4eef0; --muted:#93a8b0; --line:#25383f;
+  --accent:#4fd1c5; --accent-ink:#06201f; --accent-soft:#143a3b;
+  --warm:#f5a85a; --warm-soft:#3a2a14;
+  --good:#4ade80; --good-soft:#12301d; --bad:#f87171; --bad-soft:#3a1717;
+  --code-bg:#08110f; --code-hl:#1b3a44;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
+body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+h1,h2,h3{font-weight:800;line-height:1.2;text-wrap:balance;margin:0 0 .5em}
+h1{font-size:1.65rem} h2{font-size:1.3rem} h3{font-size:1.05rem}
+p{margin:0 0 .8em}
+code,.mono{font-family:var(--f-mono);font-size:.92em}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+header{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding:calc(8px + env(safe-area-inset-top)) 0 0}
+.hd-top{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 16px 6px;max-width:760px;margin:0 auto}
+.hd-top b{font-size:.8rem;letter-spacing:.02em;color:var(--muted);font-weight:600}
+.status{font-size:.72rem;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.status.off{background:var(--warm-soft);color:var(--warm)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:0 16px 8px;max-width:760px;margin:0 auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:99px;padding:5px 12px;font:600 .8rem var(--f-body);cursor:pointer;min-height:32px}
+.chip[aria-current="step"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip.done{color:var(--ink)}
+.chip:disabled{opacity:.45;cursor:not-allowed}
+.bar{height:3px;background:var(--line)}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+main{max-width:760px;margin:0 auto;padding:18px 16px;display:flex;flex-direction:column;gap:16px}
+#banner{max-width:760px;margin:0 auto;padding:10px 16px 0}
+.banner{background:var(--warm-soft);color:var(--warm);border-radius:10px;padding:10px 12px;font-size:.88rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.card>*{margin:0}
+.lead{color:var(--muted);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:.78rem;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+ul.clean{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:480px;font-size:.92rem}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--accent-soft);color:var(--accent);font-weight:700}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:center;font-variant-numeric:tabular-nums}
+.btn{font:700 1rem var(--f-body);min-height:48px;padding:0 18px;border-radius:12px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.small{min-height:40px;padding:0 14px;font-size:.92rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+input[type=text],input[type=number],textarea{font:inherit;width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);min-height:48px}
+textarea{min-height:140px;font-family:var(--f-mono);font-size:.9rem;line-height:1.5;resize:vertical}
+input.sm{width:92px;text-align:center;font-family:var(--f-mono)}
+label{font-weight:600;font-size:.92rem}
+.code{background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:10px 0;overflow-x:auto;font-family:var(--f-mono);font-size:.84rem;line-height:1.6}
+.code .ln{display:flex;white-space:pre;padding:0 12px 0 0;min-width:max-content}
+.code .ln.on{background:var(--code-hl);box-shadow:inset 3px 0 0 var(--amp)}
+.code .no{color:var(--code-dim);width:34px;text-align:right;padding-right:12px;flex:0 0 34px;user-select:none}
+.code .k{color:var(--code-kw)} .code .n{color:var(--code-num)} .code .c{color:var(--code-c)} .code .amp{color:var(--amp);font-weight:700}
+.qt{font-weight:700;margin:0 0 8px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;min-height:48px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
+.opt .mk{flex:0 0 26px;height:26px;border-radius:8px;border:1.5px solid var(--line);display:grid;place-items:center;font:700 .8rem var(--f-mono);color:var(--muted)}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt.sel .mk{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.opt.ok{border-color:var(--good);background:var(--good-soft)}
+.opt.no{border-color:var(--bad);background:var(--bad-soft);opacity:.8}
+.fb{font-size:.92rem;margin-top:8px}.fb:empty{display:none}
+.fb.good{color:var(--good)}.fb.bad{color:var(--bad)}
+.quiz+.quiz{border-top:1px dashed var(--line);padding-top:14px}
+.timer{position:sticky;top:var(--hh,96px);z-index:5;display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 14px;font-weight:700}
+.timer .t{font-family:var(--f-mono);font-size:1.3rem;font-variant-numeric:tabular-nums}
+.timer.low .t{color:var(--bad)}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--muted);font:700 .88rem var(--f-body);padding:0 14px;min-height:44px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.seg.vm button[aria-pressed="true"]{background:var(--warm);color:#fff}
+.seg.good button[aria-pressed="true"]{background:var(--good);color:#fff}
+.seg.bad button[aria-pressed="true"]{background:var(--bad);color:#fff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.two{grid-template-columns:1fr}}
+.analogy{border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.analogy.v{background:var(--warm-soft);color:var(--ink)} .analogy.r{background:var(--accent-soft);color:var(--ink)}
+.analogy b{font-size:1rem}
+.mem{display:flex;flex-direction:column;gap:10px}
+.frame{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg)}
+.frame h4{margin:0 0 8px;font:600 .78rem var(--f-mono);color:var(--muted)}
+.cells{display:flex;gap:10px;flex-wrap:wrap}
+.box{min-width:78px;text-align:center;border:2px solid var(--ink);border-radius:10px;padding:4px 10px 6px;background:var(--surface)}
+.box .lb{font:600 .74rem var(--f-mono);color:var(--muted)}
+.box .vl{font:700 1.4rem var(--f-mono);font-variant-numeric:tabular-nums}
+.box.cp{border-color:var(--warm)} .box.al{border-color:var(--accent);border-style:dashed;background:var(--accent-soft)}
+.box.flash{animation:fl .8s}
+@keyframes fl{0%{box-shadow:0 0 0 0 var(--amp)}40%{box-shadow:0 0 0 6px var(--amp)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.box.flash{animation:none;outline:3px solid var(--amp)}}
+.empty{color:var(--muted);font-size:.88rem}
+.out{font:600 .9rem var(--f-mono);background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:8px 12px;min-height:38px}
+.note{background:var(--accent-soft);border-radius:10px;padding:10px 12px;margin:0;font-size:.92rem;min-height:3.4em}
+.sim.vm .note{background:var(--warm-soft)}
+details{border:1px solid var(--line);border-radius:12px;padding:0 14px;background:var(--surface)}
+details>summary{cursor:pointer;font-weight:700;padding:12px 0;min-height:44px}
+details[open]>summary{border-bottom:1px solid var(--line);margin-bottom:10px}
+details>div{padding-bottom:12px;display:flex;flex-direction:column;gap:10px}
+.slot{font:700 .95rem var(--f-mono);min-width:34px;height:30px;margin:0 2px;border-radius:7px;border:1.5px dashed var(--amp);background:transparent;color:var(--amp);cursor:pointer}
+.slot.on{background:var(--amp);color:#10222a;border-style:solid}
+.fixcode{background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:12px;font:.86rem/2.1 var(--f-mono);overflow-x:auto;white-space:pre}
+.fixcode .k{color:var(--code-kw)}
+.pill{display:inline-block;font-size:.76rem;font-weight:700;padding:2px 9px;border-radius:99px}
+.pill.ok{background:var(--good-soft);color:var(--good)} .pill.no{background:var(--bad-soft);color:var(--bad)} .pill.wait{background:var(--warm-soft);color:var(--warm)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.92rem}
+.kv dt{color:var(--muted)} .kv dd{margin:0}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat div{background:var(--accent-soft);border-radius:10px;padding:10px;text-align:center}
+.stat b{display:block;font:700 1.4rem var(--f-mono)} .stat span{font-size:.76rem;color:var(--muted)}
+nav#nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+.nv{max-width:760px;margin:0 auto;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+.nv .hint{grid-column:1/-1;font-size:.78rem;color:var(--muted);text-align:center;margin:0}
+.nv .hint:empty{display:none}
+</style>
+</head>
+<body>
+<header id="hd">
+  <div class="hd-top"><b>ІНФОРМАТИКА · 10 КЛАС · C++</b><span id="status" class="status off">Підключення…</span></div>
+  <div class="chips" id="chips" role="tablist" aria-label="Етапи уроку"></div>
+  <div class="bar"><i id="prog" style="width:0"></i></div>
+</header>
+<div id="banner"></div>
+<main id="main"></main>
+<nav id="nav"><div class="nv">
+  <button class="btn" id="prev" type="button">Назад</button>
+  <button class="btn primary" id="next" type="button">Далі</button>
+  <p class="hint" id="hint"></p>
+</div></nav>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function hl(src){
+  return esc(src).replace(/(\/\/.*$)|\b(void|int|return|if|else|cout|using|namespace|std|bool|double|for|while)\b|\b(\d+)\b|(&amp;)/g,
+    function(m,c,k,n){ return c?'<span class="c">'+c+'</span>':k?'<span class="k">'+k+'</span>':n?'<span class="n">'+n+'</span>':'<span class="amp">&amp;</span>'; });
+}
+function h(tag,props){
+  var e=document.createElement(tag);
+  if(props) Object.keys(props).forEach(function(k){
+    var v=props[k];
+    if(k==='class') e.className=v;
+    else if(k==='html') e.innerHTML=v;
+    else if(k.indexOf('on')===0) e.addEventListener(k.slice(2),v);
+    else if(v===true) e.setAttribute(k,'');
+    else if(v!==false&&v!=null) e.setAttribute(k,v);
+  });
+  var kids=Array.prototype.slice.call(arguments,2);
+  (function add(list){ list.forEach(function(c){ if(Array.isArray(c)) return add(c); if(c==null||c===false) return; e.append(c.nodeType?c:document.createTextNode(String(c))); }); })(kids);
+  return e;
+}
+function codeBlock(lines,o){
+  o=o||{}; var d=h('div',{class:'code'});
+  lines.forEach(function(ln,i){
+    d.append(h('div',{class:'ln'+(o.hl&&o.hl.indexOf(i+1)>=0?' on':'')},h('span',{class:'no'},String(i+1)),h('span',{class:'tx',html:hl(ln)||'&nbsp;'})));
+  });
+  return d;
+}
+function card(){ return h.apply(null,['div',{class:'card'}].concat([].slice.call(arguments))); }
+function hash(s){var x=0;for(var i=0;i<s.length;i++){x=(x*31+s.charCodeAt(i))>>>0;}return x;}
+function workNo(id){return 100+hash(id)%900;}
+
+/* ---------- content ---------- */
+var TQ=[
+ {prompt:'Що виведе програма?',code:['void f(int x) { x = x + 5; }','','int main() {','    int a = 3;','    f(a);','    cout << a;','}'],options:['3','8','5','Помилка компіляції'],correct:0},
+ {prompt:'У виклику sum(a, 5) що є аргументами?',options:['Лише a','a і 5','int a та int b із заголовка функції','sum'],correct:1},
+ {prompt:'Яке значення має вираз sq(4) + sq(2)?',code:['int sq(int x) {','    return x * x;','}'],options:['18','20','36','12'],correct:1},
+ {prompt:'Що відбувається після виконання оператора return у функції?',options:['Функція завершується, рядки після return не виконуються','Функція продовжує роботу і виконує решту рядків','Завершується вся програма','Значення return ігнорується'],correct:0},
+ {prompt:'Напишіть функцію int maxOf(int a, int b), яка повертає більше з двох чисел.',open:true}
+];
+var REF_OPEN=['int maxOf(int a, int b) {','    if (a > b) return a;','    return b;','}'];
+var DEMOS={
+ demoA:{no:417,answers:[0,1,2,0],open:'int maxOf(int a, int b) {\n    if (a > b) return a;\n    else return b;\n}'},
+ demoB:{no:238,answers:[1,1,1,0],open:'int maxOf(a, b) {\n    if (a > b) return a\n    return b;\n}'}
+};
+var STEPS=['Старт','Тест','Перевірка','Проблема','Тема','Практика','Підсумок','Домашнє','Вчителю'];
+
+/* ---------- state ---------- */
+var LS='sw-lesson-v2';
+var S={step:0,name:'',uid:null,localId:'u'+Math.random().toString(36).slice(2,10),online:false,dbReady:false,isTeacher:false,isOwner:false,readonly:false,
+  test:{started:false,submitted:false,answers:[null,null,null,null],open:'',endsAt:0,auto:0},
+  review:{target:null,done:false,marks:[],open:null,comment:'',match:0},
+  light:null,reflection:'',done:{},tsub:null,myres:[],tdata:null,tpass:'',cache:{},mode2:null};
+function save(){try{localStorage.setItem(LS,JSON.stringify({name:S.name,localId:S.localId,test:S.test,review:S.review,light:S.light,reflection:S.reflection}));}catch(e){}}
+(function(){try{var d=JSON.parse(localStorage.getItem(LS)||'null');if(d){S.name=d.name||'';S.localId=d.localId||S.localId;S.test=d.test||S.test;S.review=d.review||S.review;S.light=d.light||null;S.reflection=d.reflection||'';}}catch(e){}})();
+function myId(){return S.uid||S.localId;}
+function total(){return S.isTeacher?STEPS.length:STEPS.length-1;}
+function autoScore(a){var n=0;for(var i=0;i<4;i++)if(a[i]===TQ[i].correct)n++;return n;}
+
+function gateMsg(step){
+  if(S.isTeacher) return '';
+  if(step>=1&&!S.name.trim()) return 'Введіть ім’я на стартовому кроці.';
+  if(step>=2&&!S.test.submitted) return 'Спочатку здайте тест.';
+  if(step>=3&&!S.review.done) return 'Спочатку перевірте роботу однокласника.';
+  return '';
+}
+
+/* ---------- server (Google Apps Script) ---------- */
+var API='PASTE_WEB_APP_URL_HERE';
+function banner(msg){var b=document.getElementById('banner');b.innerHTML='';if(msg)b.append(h('div',{class:'banner'},msg));}
+function setStatus(){var s=document.getElementById('status');
+  if(S.online){s.textContent='Онлайн: взаємоперевірка активна';s.className='status';}
+  else{s.textContent='Автономний режим';s.className='status off';}}
+async function api(action,data){
+  var r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:action},data||{}))});
+  if(!r.ok)throw new Error('http '+r.status);
+  return r.json();
+}
+async function safeCall(action,data,quiet){
+  try{return await api(action,data);}
+  catch(e){
+    console.warn(e);
+    if(!quiet){S.online=false;setStatus();banner('Немає зв’язку із сервером. Урок працює в автономному режимі: відповіді не зберігаються, а перевірка демонстраційна.');}
+    return null;
+  }
+}
+function saveProfile(){
+  if(!S.online)return Promise.resolve();
+  return safeCall('profile',{uid:S.uid,name:S.name,light:S.light||'',reflection:S.reflection||''},true);
+}
+async function initCaps(){
+  S.isTeacher=location.hash==='#teacher';
+  S.uid=S.localId;
+  S.online=/^https?:\/\//.test(API);
+  setStatus();buildChips();updateNav();
+  if(S.online){
+    var p=await safeCall('ping',{},true);
+    if(!p||!p.ok){S.online=false;setStatus();banner('Сервер недоступний. Урок працює в автономному режимі з демонстраційною перевіркою.');}
+  }else{banner('Сервер не підключено (не вказано адресу в константі API). Працює демонстраційний режим.');}
+  if(S.test.started&&!S.test.submitted&&S.test.endsAt&&Date.now()>S.test.endsAt)submitTest();
+  if(S.step===2)refresh2();
+}
+
+/* ---------- reusable widgets ---------- */
+function quizItem(o){
+  var solved=false;
+  var fb=h('div',{class:'fb',role:'status','aria-live':'polite'});
+  var btns=o.options.map(function(t,i){
+    return h('button',{type:'button',class:'opt',onclick:function(){pick(i);}},h('span',{class:'mk'},String.fromCharCode(65+i)),h('span',{class:o.mono?'mono':''},t));
+  });
+  function pick(i){
+    if(solved) return;
+    if(i===o.correct){solved=true;btns[i].classList.add('ok');fb.className='fb good';fb.textContent='Вірно. '+(o.explain||'');if(o.onSolved)o.onSolved();}
+    else{btns[i].classList.add('no');btns[i].disabled=true;fb.className='fb bad';fb.textContent='Ще ні. '+(o.hint||'Спробуйте інший варіант.');}
+  }
+  return h('div',{class:'quiz'},o.prompt&&h('p',{class:'qt'},o.prompt),o.code&&codeBlock(o.code),h('div',{class:'opts'},btns),fb);
+}
+
+function simState(mode,a0,b0,step){
+  var x=a0,y=b0,fa=null,fb=null,t=null,frame=false;
+  if(step>=1){frame=true;if(mode==='val'){fa=a0;fb=b0;}}
+  if(step>=2)t=a0;
+  if(step>=3){if(mode==='val')fa=b0;else x=b0;}
+  if(step>=4){if(mode==='val')fb=t;else y=t;}
+  if(step>=5)frame=false;
+  if(mode==='ref'&&frame){fa=x;fb=y;}
+  return {x:x,y:y,fa:fa,fb:fb,t:t,frame:frame};
+}
+function makeStepper(o){
+  var mode=o.mode||'val',step=0,a0=o.a0,b0=o.b0,MAX=5;
+  var root=h('div',{class:'sim card'});
+  var codeEl=h('div'),memEl=h('div',{class:'mem'}),out=h('div',{class:'out','aria-live':'polite'}),note=h('p',{class:'note'}),cnt=h('span',{class:'empty'});
+  var bVal=h('button',{type:'button',onclick:function(){setMode('val');}},'За значенням');
+  var bRef=h('button',{type:'button',onclick:function(){setMode('ref');}},'За посиланням (&)');
+  var seg=h('div',{class:'seg',role:'group','aria-label':'Спосіб передачі'},bVal,bRef);
+  var prev=h('button',{type:'button',class:'btn small',onclick:function(){go(step-1);}},'Крок назад');
+  var next=h('button',{type:'button',class:'btn small primary',onclick:function(){go(step+1);}},'Наступний крок');
+  var rst=h('button',{type:'button',class:'btn small',onclick:function(){go(0);}},'Спочатку');
+  var NOTES={
+    val:['У main створено змінні x та y.','Виклик: a і b — нові змінні. Значення x і y скопійовано в a і b.','t отримує копію значення a.','a = b: змінилась лише локальна копія a. Змінна x лишилась як була.','b = t: змінилась лише копія b. Змінна y не чіпається.','Функція завершилась, a, b і t зникли. У main x та y не змінились.'],
+    ref:['У main створено змінні x та y.','Виклик: a і b не є новими змінними, це інші імена для x і y. Копій немає.','t отримує значення a, тобто значення x.','a = b: a — це x, тож змінилась сама змінна x.','b = t: b — це y, тож змінилась сама змінна y.','Функція завершилась, імена a і b зникли, а зміни в x та y залишились.']
+  };
+  var LINE=[8,9,2,3,4,10];
+  function lines(){
+    var nm=mode==='val'?'swapVal':'swapRef';
+    return ['void '+nm+(mode==='val'?'(int a, int b) {':'(int &a, int &b) {'),'    int t = a;','    a = b;','    b = t;','}','','int main() {','    int x = '+a0+', y = '+b0+';','    '+nm+'(x, y);','    cout << x << " " << y;','}'];
+  }
+  function box(cls,lb,val,flash){
+    return h('div',{class:'box '+cls+(flash?' flash':'')},h('div',{class:'lb'},lb),h('div',{class:'vl'},String(val)));
+  }
+  function draw(){
+    var s=simState(mode,a0,b0,step),p=step>0?simState(mode,a0,b0,step-1):null;
+    bVal.setAttribute('aria-pressed',mode==='val');bRef.setAttribute('aria-pressed',mode==='ref');
+    seg.className='seg'+(mode==='val'?' vm':'');root.className='sim card'+(mode==='val'?' vm':'');
+    codeEl.replaceChildren(codeBlock(lines(),{hl:[LINE[step]]}));
+    var main=h('div',{class:'frame'},h('h4',{},'main()'),h('div',{class:'cells'},
+      box('',"x",s.x,p&&p.x!==s.x),box('',"y",s.y,p&&p.y!==s.y)));
+    var fn;
+    if(s.frame){
+      var cells=[];
+      if(mode==='val'){cells.push(box('cp','a (копія)',s.fa,p&&p.fa!==s.fa),box('cp','b (копія)',s.fb,p&&p.fb!==s.fb));}
+      else{cells.push(box('al','a = x',s.fa,p&&p.fa!==s.fa),box('al','b = y',s.fb,p&&p.fb!==s.fb));}
+      if(s.t!==null)cells.push(box('',"t",s.t,step===2));
+      fn=h('div',{class:'frame'},h('h4',{},(mode==='val'?'swapVal':'swapRef')+'()'),h('div',{class:'cells'},cells));
+    }else{
+      fn=h('div',{class:'frame'},h('h4',{},'функція'),h('div',{class:'empty'},step===0?'Функцію ще не викликано.':'Функція завершилась, її змінні знищено.'));
+    }
+    memEl.replaceChildren(main,fn);
+    out.textContent=step>=5?'Вивід:  '+s.x+' '+s.y:'Вивід:';
+    note.textContent=NOTES[mode][step];
+    cnt.textContent='Крок '+(step+1)+' з '+(MAX+1);
+    prev.disabled=step===0;next.disabled=step===MAX;
+  }
+  function go(n){step=Math.max(0,Math.min(MAX,n));draw();}
+  function setMode(m){mode=m;step=0;draw();}
+  root.append(o.lock?null:h('div',{class:'row'},seg),codeEl,memEl,out,note,h('div',{class:'row'},prev,next,rst,cnt));
+  draw();
+  return {el:root,set:function(a,b,m){a0=a;b0=b;step=0;if(m)mode=m;draw();}};
+}
+
+/* ---------- navigation ---------- */
+function buildChips(){
+  var c=document.getElementById('chips');c.replaceChildren();
+  for(var i=0;i<total();i++){(function(i){
+    var locked=!!gateMsg(i)&&i>S.step;
+    var b=h('button',{type:'button',role:'tab',class:'chip'+(i<S.step?' done':''),disabled:locked,onclick:function(){go(i);}},(i+1)+'. '+STEPS[i]);
+    if(i===S.step)b.setAttribute('aria-current','step');
+    c.append(b);
+  })(i);}
+  var cur=c.querySelector('[aria-current]');if(cur&&cur.scrollIntoView)try{c.scrollTo({left:cur.offsetLeft-16,behavior:'smooth'});}catch(e){}
+  document.getElementById('prog').style.width=((S.step+1)/total()*100)+'%';
+}
+function updateNav(){
+  var p=document.getElementById('prev'),n=document.getElementById('next'),hint=document.getElementById('hint');
+  var msg=gateMsg(S.step+1);
+  p.disabled=S.step===0; n.disabled=S.step>=total()-1||!!msg;
+  n.textContent=S.step>=total()-1?'Кінець уроку':'Далі';
+  hint.textContent=S.step>=total()-1?'':msg;
+  buildChips();
+}
+function go(i){
+  if(i<0||i>=total())return; if(i>S.step&&gateMsg(i))return;
+  S.step=i;renderStep();updateNav();window.scrollTo(0,0);
+}
+document.getElementById('prev').addEventListener('click',function(){go(S.step-1);});
+document.getElementById('next').addEventListener('click',function(){go(S.step+1);});
+function syncHH(){document.documentElement.style.setProperty('--hh',document.getElementById('hd').offsetHeight+8+'px');}
+window.addEventListener('resize',syncHH);
+
+function renderStep(){
+  var m=document.getElementById('main');m.replaceChildren();
+  if(S.step!==2&&typeof clearPoll==='function')clearPoll();
+  var cacheable=[0,3,4,5,6,7];
+  var el;
+  if(cacheable.indexOf(S.step)>=0){ if(!S.cache[S.step])S.cache[S.step]=BUILD[S.step](); el=S.cache[S.step]; }
+  else el=BUILD[S.step]();
+  m.append(el); syncHH();
+}
+
+/* ---------- step 0 ---------- */
+function build0(){
+  var w=h('div',{style:'display:contents'});
+  var plan=[['1','Вступ, цілі уроку','2 хв'],['2','Тест по попередній темі','5 хв'],['3','Анонімна взаємоперевірка','5 хв'],['4','Проблема: чому обмін не працює','4 хв'],['5','Нова тема: &, порівняння зі значенням','10 хв'],['6','Практика: 4 завдання','13 хв'],['7','Підсумок і рефлексія','4 хв'],['8','Домашнє завдання','2 хв']];
+  var name=h('input',{type:'text',id:'nm',autocomplete:'nickname',placeholder:'Наприклад, Олена К.',maxlength:'40',value:S.name});
+  name.addEventListener('input',function(){S.name=name.value;save();updateNav();});
+  w.append(
+    card(h('div',{class:'meta'},h('span',{class:'tag'},'10 клас'),h('span',{class:'tag'},'STEM'),h('span',{class:'tag'},'C++'),h('span',{class:'tag'},'45 хв')),
+      h('h1',{},'Передача параметрів за посиланням (&)'),
+      h('p',{class:'lead'},'Порівняння з передачею за значенням. Обмін значень.')),
+    card(h('h2',{},'Після уроку ви зможете'),
+      h('ul',{class:'clean'},
+        h('li',{},'пояснити різницю між копією змінної та псевдонімом;'),
+        h('li',{},'записати параметр-посилання: ',h('code',{html:hl('int &a')}),';'),
+        h('li',{},'написати функцію обміну значень і пояснити, чому версія за значенням не працює;'),
+        h('li',{},'вирішувати, коли функції потрібно змінити змінні з викликаючого коду.'))),
+    h('details',{},h('summary',{},'План уроку, 45 хвилин'),h('div',{},
+      h('div',{class:'tablewrap'},h('table',{},h('thead',{},h('tr',{},h('th',{class:'num'},'№'),h('th',{},'Етап'),h('th',{class:'num'},'Час'))),
+        h('tbody',{},plan.map(function(r){return h('tr',{},h('td',{class:'num'},r[0]),h('td',{},r[1]),h('td',{class:'num'},r[2]));})))))),
+    card(h('h2',{},'Перед початком'),
+      h('label',{for:'nm'},'Ваше ім’я або нікнейм'),name,
+      h('p',{class:'empty'},'Ім’я бачить лише вчитель. Однокласник, який перевірятиме вашу роботу, бачитиме тільки номер роботи.'),
+      h('div',{class:'row'},h('button',{type:'button',class:'btn primary',onclick:function(){if(!S.name.trim()&&!S.isTeacher){name.focus();return;}go(1);}},'Почати урок'))));
+  return w;
+}
+
+/* ---------- step 1: test ---------- */
+var timerId=null;
+function fmt(ms){var s=Math.ceil(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+async function submitTest(){
+  if(S.test.submitted)return;
+  clearInterval(timerId);timerId=null;
+  S.test.submitted=true;S.test.auto=autoScore(S.test.answers);save();
+  if(S.online){
+    var r=await safeCall('submit',{uid:S.uid,name:S.name,answers:S.test.answers,open:S.test.open});
+    if(r&&r.ok&&typeof r.auto==='number'){S.test.auto=r.auto;save();}
+  }
+  if(S.step===1)renderStep();
+  updateNav();
+}
+function build1(){
+  var w=h('div',{style:'display:contents'});
+  if(S.test.submitted){
+    w.append(card(h('h2',{},'Роботу здано'),
+      h('p',{},'Закриті запитання перевірено автоматично: ',h('b',{},S.test.auto+' з 4'),'. Відкрите запитання оцінить однокласник, коли перевірить вашу роботу.'),
+      h('div',{class:'row'},h('button',{type:'button',class:'btn primary',onclick:function(){go(2);}},'До взаємоперевірки'))));
+    return w;
+  }
+  if(!S.test.started){
+    w.append(card(h('h2',{},'Тест по попередній темі'),
+      h('p',{class:'lead'},'Параметри функції. Передача аргументів за значенням. Оператор return.'),
+      h('ul',{class:'clean'},h('li',{},'5 запитань, 5 хвилин.'),h('li',{},'4 запитання з варіантами відповіді та одне, де потрібно написати код.'),h('li',{},'Таймер запуститься після натискання кнопки, а по його завершенні робота здасться сама.')),
+      h('div',{class:'row'},h('button',{type:'button',class:'btn primary',onclick:function(){S.test.started=true;S.test.endsAt=Date.now()+5*60*1000;save();renderStep();}},'Почати тест'))));
+    return w;
+  }
+  var tm=h('span',{class:'t',id:'tmr'},'05:00'),tbox=h('div',{class:'timer'},h('span',{},'Залишилось'),tm);
+  function tick(){var left=Math.max(0,S.test.endsAt-Date.now());tm.textContent=fmt(left);tbox.classList.toggle('low',left<60000);if(left<=0)submitTest();}
+  clearInterval(timerId);timerId=setInterval(tick,500);tick();
+  w.append(tbox);
+  TQ.forEach(function(q,i){
+    var c=card(h('p',{class:'qt'},(i+1)+'. '+q.prompt));
+    if(q.code)c.append(codeBlock(q.code));
+    if(q.open){
+      var ta=h('textarea',{id:'open',placeholder:'Запишіть код функції…','aria-label':'Код функції maxOf',spellcheck:'false',autocapitalize:'off',autocomplete:'off'});
+      ta.value=S.test.open;
+      ta.addEventListener('input',function(){S.test.open=ta.value;save();});
+      c.append(ta);
+    }else{
+      var opts=h('div',{class:'opts',role:'radiogroup'});
+      var btns=q.options.map(function(t,j){
+        var b=h('button',{type:'button',role:'radio',class:'opt'+(S.test.answers[i]===j?' sel':''),'aria-checked':S.test.answers[i]===j,onclick:function(){
+          S.test.answers[i]=j;btns.forEach(function(x,k){x.classList.toggle('sel',k===j);x.setAttribute('aria-checked',k===j);});save();}},
+          h('span',{class:'mk'},String.fromCharCode(65+j)),h('span',{},t));
+        return b;});
+      btns.forEach(function(x){opts.append(x);});c.append(opts);
+    }
+    w.append(c);
+  });
+  var sure=false;
+  var sb=h('button',{type:'button',class:'btn primary',onclick:function(){
+    var empty=S.test.answers.filter(function(a){return a===null;}).length+(S.test.open.trim()?0:1);
+    if(empty&&!sure){sure=true;sb.textContent='Без відповіді: '+empty+'. Здати все одно?';return;}
+    submitTest();}},'Здати роботу');
+  w.append(h('div',{class:'row'},sb));
+  return w;
+}
+
+/* ---------- step 2: peer review ---------- */
+function mode2(){
+  if(!S.test.submitted)return 'locked';
+  if(S.review.done)return 'done';
+  if(S.tsub)return 'form';
+  return 'waiting';
+}
+var box2=null,pollId=null;
+function clearPoll(){if(pollId){clearInterval(pollId);pollId=null;}}
+async function fetchTarget(){
+  if(!S.online||S.tsub||S.review.done)return;
+  var r=await safeCall('target',{uid:S.uid},true);
+  if(!r||!r.ok)return;
+  if(r.done){S.review.done=true;save();}
+  else if(r.work){S.tsub=r.work;}
+  if(S.step===2)refresh2();
+  updateNav();
+}
+async function fetchResults(){
+  if(!S.online)return;
+  var r=await safeCall('results',{uid:S.uid},true);
+  if(!r||!r.ok)return;
+  if(typeof r.auto==='number'){S.test.auto=r.auto;}
+  S.myres=r.reviews||[];
+  if(S.step===2)refresh2();
+}
+function pollTick(){
+  if(S.step!==2){clearPoll();return;}
+  var m=mode2();
+  if(m==='waiting')fetchTarget();else if(m==='done')fetchResults();
+}
+function build2(){
+  S.mode2=null;
+  box2=h('div',{style:'display:contents'});
+  clearPoll();refresh2();
+  pollId=setInterval(pollTick,6000);pollTick();
+  return box2;
+}
+function refresh2(){
+  if(!box2||S.step!==2)return;
+  var m=mode2();
+  if(m==='done'&&S.mode2==='done'){var r=document.getElementById('myres');if(r)r.replaceChildren(resultsEl());return;}
+  if(m===S.mode2&&(m==='form'||m==='waiting'))return;
+  S.mode2=m;box2.replaceChildren();
+  if(m==='locked')box2.append(card(h('p',{},'Спочатку здайте тест.')));
+  else if(m==='waiting')box2.append(waitingEl());
+  else if(m==='form')box2.append(reviewForm(S.tsub));
+  else box2.append(doneEl());
+}
+function waitingEl(){
+  return card(h('h2',{},'Шукаємо роботу для перевірки'),
+    h('p',{},S.online?'Поки що ніхто з однокласників не здав тест. Робота з’явиться тут автоматично, щойно хтось здасть.':'Автономний режим: робіт однокласників немає, тому для тренування можна перевірити демонстраційну роботу.'),
+    h('div',{class:'row'},h('button',{type:'button',class:'btn primary',onclick:function(){
+      S.tsub=Object.assign({demo:true},Math.random()<.5?DEMOS.demoA:DEMOS.demoB);refresh2();}},'Перевірити демо-роботу')));
+}
+function reviewForm(sub){
+  var marks=[null,null,null,null],open=null;
+  var c=h('div',{style:'display:contents'});
+  c.append(card(h('h2',{},'Робота №'+sub.no),h('p',{},'Автор вам невідомий. Порівняйте відповіді з ключем і виставте оцінки.')));
+  var submit=h('button',{type:'button',class:'btn primary',disabled:true},'Надіслати перевірку');
+  function chk(){submit.disabled=marks.some(function(x){return x===null;})||open===null;}
+  TQ.slice(0,4).forEach(function(q,i){
+    var ans=sub.answers[i],has=ans!==null&&ans!==undefined;
+    var yes=h('button',{type:'button','aria-pressed':false,onclick:function(){marks[i]=true;yes.setAttribute('aria-pressed',true);no.setAttribute('aria-pressed',false);chk();}},'Вірно');
+    var no=h('button',{type:'button','aria-pressed':false,onclick:function(){marks[i]=false;no.setAttribute('aria-pressed',true);yes.setAttribute('aria-pressed',false);chk();}},'Невірно');
+    var cc=card(h('p',{class:'qt'},(i+1)+'. '+q.prompt));
+    if(q.code)cc.append(codeBlock(q.code));
+    cc.append(h('dl',{class:'kv'},h('dt',{},'Відповідь учня'),h('dd',{},has?q.options[ans]:'без відповіді'),h('dt',{},'Ключ'),h('dd',{},q.options[q.correct])));
+    cc.append(h('div',{class:'seg',role:'group','aria-label':'Оцінка запитання '+(i+1)},yes,no));
+    c.append(cc);
+  });
+  var radios=[['0','0 балів: функція не працює або відповіді немає'],['1','1 бал: ідея правильна, є дрібна помилка'],['2','2 бали: функція повністю правильна']];
+  var rb=radios.map(function(r){var b=h('button',{type:'button',class:'opt',role:'radio','aria-checked':false,onclick:function(){open=+r[0];rb.forEach(function(x){x.classList.remove('sel');x.setAttribute('aria-checked',false);});b.classList.add('sel');b.setAttribute('aria-checked',true);chk();}},h('span',{class:'mk'},r[0]),h('span',{},r[1]));return b;});
+  var com=h('input',{type:'text',id:'com',maxlength:'160',placeholder:'Коментар автору (необов’язково)','aria-label':'Коментар автору'});
+  var oc=card(h('p',{class:'qt'},'5. '+TQ[4].prompt),
+    h('p',{class:'empty'},'Код учня'),h('div',{class:'code',style:'padding:10px 14px'},h('pre',{style:'margin:0;white-space:pre-wrap;font:inherit'},sub.open&&sub.open.trim()?sub.open:'(порожньо)')),
+    h('p',{class:'empty'},'Еталон'),codeBlock(REF_OPEN),
+    h('div',{class:'opts',role:'radiogroup'},rb),com);
+  c.append(oc);
+  submit.addEventListener('click',async function(){
+    submit.disabled=true;
+    var match=0;for(var i=0;i<4;i++){if(marks[i]===(sub.answers[i]===TQ[i].correct))match++;}
+    var comment=com.value.trim();
+    if(S.online&&!sub.demo){
+      var r=await safeCall('review',{uid:S.uid,marks:marks,open:open,comment:comment});
+      if(r&&r.ok&&typeof r.match==='number')match=r.match;
+    }
+    S.review={done:true,marks:marks,open:open,comment:comment,match:match};save();
+    S.mode2=null;refresh2();updateNav();window.scrollTo(0,0);
+    if(S.online)fetchResults();
+  });
+  c.append(h('div',{class:'row'},submit));
+  return c;
+}
+function resultsEl(){
+  var got=S.myres||[];
+  var auto=S.test.auto;
+  var c=h('div',{style:'display:contents'});
+  var head=card(h('h2',{},'Ваш результат'));
+  var openAvg=null;
+  if(got.length){openAvg=got.reduce(function(s,r){return s+(r.open||0);},0)/got.length;}
+  head.append(h('div',{class:'stat'},
+    h('div',{},h('b',{},auto+'/4'),h('span',{},'закриті, автоперевірка')),
+    h('div',{},h('b',{},openAvg===null?'—':(Math.round(openAvg*10)/10)+'/2'),h('span',{},'відкрите, оцінка однокласника')),
+    h('div',{},h('b',{},openAvg===null?auto+'/6':(Math.round((auto+openAvg)*10)/10)+'/6'),h('span',{},openAvg===null?'поки без відкритого':'разом'))));
+  if(!got.length)head.append(h('p',{class:'empty'},S.online?'Вашу роботу ще ніхто не перевірив. Оцінка з’явиться тут сама.':'В автономному режимі оцінки від однокласників немає.'));
+  else got.forEach(function(r){if(r.comment)head.append(h('p',{},h('span',{class:'pill wait'},'Коментар рецензента'),' ',r.comment));});
+  c.append(head);
+  return c;
+}
+function doneEl(){
+  var c=h('div',{style:'display:contents'});
+  var ok=S.review.match;
+  c.append(card(h('h2',{},'Перевірку надіслано'),
+    h('p',{},'Ваші оцінки збіглися з ключем у ',h('b',{},(ok||0)+' з 4'),' закритих запитань.'),
+    h('p',{class:'empty'},'Перевіряти чужий код корисно: ви повторили теорію, поки шукали помилки.')));
+  var r=h('div',{id:'myres',style:'display:contents'});r.append(resultsEl());c.append(r);
+  c.append(h('div',{class:'row'},h('button',{type:'button',class:'btn primary',onclick:function(){go(3);}},'До нової теми')));
+  return c;
+}
+
+/* ---------- step 3: problem ---------- */
+function build3(){
+  var out=h('div',{class:'out'},'Вивід:');
+  var run=h('button',{type:'button',class:'btn small',onclick:function(){out.textContent='Вивід:  5 9';out.style.color='var(--amp)';}},'Запустити');
+  var q=quizItem({prompt:'Алгоритм обміну записано правильно, але x і y не помінялися. Чому?',options:['Функція працює з копіями x та y','Алгоритм обміну містить помилку','Потрібно додати return','Змінні x та y занадто малі'],correct:0,
+    hint:'Перевірте, що саме передається у функцію під час виклику.',explain:'Параметри a і b — це копії. Функція чудово поміняла копії, а оригінали залишились на місці.',
+    onSolved:function(){nx.style.display='';}});
+  var nx=h('div',{class:'row',style:'display:none'},h('button',{type:'button',class:'btn primary',onclick:function(){go(4);}},'Розібратися в пам’яті'));
+  return h('div',{style:'display:contents'},
+    card(h('h2',{},'Завдання: поміняти значення двох змінних'),
+      h('p',{},'Нехай x = 5, y = 9. Після виклику функції x має стати 9, а y — 5. Запустіть програму.'),
+      codeBlock(['void swapBad(int a, int b) {','    int t = a;','    a = b;','    b = t;','}','','int main() {','    int x = 5, y = 9;','    swapBad(x, y);','    cout << x << " " << y;','}']),
+      h('div',{class:'row'},run),out),
+    card(q),nx);
+}
+
+/* ---------- step 4: theory ---------- */
+function build4(){
+  var w=h('div',{style:'display:contents'});
+  w.append(
+    card(h('h2',{},'Дві ідеї'),
+      h('div',{class:'two'},
+        h('div',{class:'analogy v'},h('b',{},'За значенням = ксерокопія'),h('span',{},'Функція отримує копію документа. Малює на ній що завгодно, оригінал лишається чистим.')),
+        h('div',{class:'analogy r'},h('b',{},'За посиланням = ярлик'),h('span',{},'Функція отримує ще одне ім’я для того самого файлу. Зміни через ярлик змінюють оригінал.')))),
+    h('h2',{style:'margin:4px 0 0'},'Що відбувається в пам’ятi'.replace('i','і')),
+    h('p',{class:'empty',style:'margin:-8px 0 0'},'Перемикайте спосіб передачі та проходьте код крок за кроком. Коробка, що спалахнула, щойно змінилась.'),
+    makeStepper({a0:5,b0:9,mode:'val'}).el,
+    card(h('h2',{},'Синтаксис'),
+      codeBlock(['void swapGood(int &a, int &b) {','    int t = a;','    a = b;','    b = t;','}','','// виклик:','swapGood(x, y);']),
+      h('p',{},'Знак ',h('code',{html:hl('&')}),' після типу означає: ',h('b',{},'a — інше ім’я для змінної, яку передали у виклику'),'. Під час виклику ніякого ',h('code',{html:hl('&')}),' писати не потрібно.')),
+    card(h('h2',{},'Порівняння'),
+      h('div',{class:'tablewrap'},h('table',{},h('thead',{},h('tr',{},h('th',{},''),h('th',{},'За значенням'),h('th',{},'За посиланням (&)'))),
+        h('tbody',{},
+          [['Що передається','копія значення','сама змінна під іншим іменем'],['Зміна всередині функції','оригінал не змінюється','оригінал змінюється'],['Що можна передати','будь-який вираз: 3, x + 1','лише змінну'],['Коли використовувати','потрібне лише значення','треба змінити змінну або «повернути» кілька значень']].map(function(r){return h('tr',{},h('td',{},h('b',{},r[0])),h('td',{},r[1]),h('td',{},r[2]));}))))),
+    card(h('h2',{},'Типові помилки'),
+      h('details',{},h('summary',{},'Забули & у заголовку'),h('div',{},h('p',{},'Функція отримає копії й нічого не змінить. Компілятор мовчить, бо код формально правильний.'),codeBlock(['void swapGood(int a, int b)   // потрібно int &a, int &b']))),
+      h('details',{},h('summary',{},'Передають число замість змінної'),h('div',{},h('p',{},'Число 3 не має імені й місця в пам’яті, тому змінити його неможливо. Виклик не скомпілюється.'),codeBlock(['swapGood(3, 5);   // помилка','swapGood(x, y);   // вірно']))),
+      h('details',{},h('summary',{},'Пишуть & у виклику'),h('div',{},h('p',{},'У виклику & означає взяття адреси (це інша тема, вказівники) і дасть помилку типів. Для посилань & пишуть лише в заголовку функції.'),codeBlock(['swapGood(&x, &y);   // помилка','swapGood(x, y);     // вірно'])))));
+  return w;
+}
+
+/* ---------- step 5: practice ---------- */
+function build5(){
+  var w=h('div',{style:'display:contents'});
+  var prog=h('span',{class:'tag'},'Виконано 0 з 4');
+  function mark(k){S.done[k]=true;prog.textContent='Виконано '+Object.keys(S.done).filter(function(x){return /^t\d/.test(x);}).length+' з 4';}
+  /* task 1 */
+  var t1n=0;function t1(){t1n++;if(t1n===3)mark('t1');}
+  var t1c=card(h('h2',{},'Завдання 1. Що виведе програма?'),
+    quizItem({code:['void inc(int x) { x++; }','','int main() {','    int a = 5;','    inc(a);','    cout << a;','}'],options:['5','6','0','Помилка'],correct:0,mono:true,explain:'Передача за значенням, a не змінюється.',onSolved:t1}),
+    quizItem({code:['void inc(int &x) { x++; }','','int main() {','    int a = 5;','    inc(a);','    cout << a;','}'],options:['5','6','0','Помилка'],correct:1,mono:true,explain:'x — це a, тому a збільшилось.',onSolved:t1}),
+    quizItem({code:['void f(int &a, int b) {','    a = a + b;','    b = 0;','}','','int main() {','    int x = 2, y = 3;','    f(x, y);','    cout << x << " " << y;','}'],options:['2 3','5 0','5 3','2 0'],correct:2,mono:true,hint:'Перший параметр за посиланням, другий за значенням.',explain:'x став 2 + 3 = 5, а y не змінився, бо b — лише копія.',onSolved:t1}));
+  /* task 2 */
+  var slots={a:false,b:false,t:false},slotEls={};
+  function slot(k){var b=h('button',{type:'button',class:'slot','aria-label':'Символ & для '+k+': вимкнено',onclick:function(){slots[k]=!slots[k];paint();}});slotEls[k]=b;return b;}
+  function paint(){Object.keys(slots).forEach(function(k){var b=slotEls[k];b.textContent=slots[k]?'&':'·';b.classList.toggle('on',slots[k]);b.setAttribute('aria-label','Символ & для '+k+': '+(slots[k]?'увімкнено':'вимкнено'));});}
+  var fb2=h('div',{class:'fb',role:'status'});
+  var fix=h('div',{class:'fixcode'});
+  fix.append(h('span',{class:'k'},'void'),' swapGood(',h('span',{class:'k'},'int'),' ',slot('a'),'a, ',h('span',{class:'k'},'int'),' ',slot('b'),'b) {\n    ',h('span',{class:'k'},'int'),' ',slot('t'),'t = a;\n    a = b;\n    b = t;\n}');
+  paint();
+  var t2c=card(h('h2',{},'Завдання 2. Виправте код'),
+    h('p',{},'Торкайтесь кнопок у коді, щоб додати або прибрати ',h('code',{html:hl('&')}),'. Зробіть так, щоб функція справді міняла x та y місцями.'),
+    fix,
+    h('div',{class:'row'},h('button',{type:'button',class:'btn small primary',onclick:function(){
+      if(slots.a&&slots.b&&!slots.t){fb2.className='fb good';fb2.textContent='Вірно. & потрібні на a і b, бо вони змінюють змінні з main. Змінна t локальна, їй посилання не потрібне.';mark('t2');}
+      else if(slots.t){fb2.className='fb bad';fb2.textContent='t створюється всередині функції для тимчасового зберігання. Це звичайна змінна.';}
+      else if(slots.a!==slots.b){fb2.className='fb bad';fb2.textContent='Посилання лише на одному параметрі: зміниться тільки одна змінна. Потрібні обидва.';}
+      else{fb2.className='fb bad';fb2.textContent='Поки що обидва параметри передаються як копії.';}
+    }},'Перевірити')),fb2);
+  /* task 3 */
+  var A,B;function nums(){A=1+Math.floor(Math.random()*19);do{B=1+Math.floor(Math.random()*19);}while(B===A);}
+  nums();
+  var holder=h('div'),stp=null;
+  var inX=h('input',{type:'number',inputmode:'numeric',class:'sm',id:'px','aria-label':'x після виклику'}),inY=h('input',{type:'number',inputmode:'numeric',class:'sm',id:'py','aria-label':'y після виклику'});
+  var fb3=h('div',{class:'fb',role:'status'}),given=h('p',{});
+  function paint3(){given.replaceChildren('Нехай ',h('code',{},'x = '+A+', y = '+B),'. Виконано ',h('code',{html:hl('swapGood(x, y);')}),' з параметрами за посиланням. Чому дорівнюють x та y?');inX.value='';inY.value='';fb3.textContent='';fb3.className='fb';holder.replaceChildren();stp=null;}
+  var t3c=card(h('h2',{},'Завдання 3. Тренажер обміну'),given,
+    h('div',{class:'row'},h('label',{for:'px'},'x ='),inX,h('label',{for:'py'},'y ='),inY),
+    h('div',{class:'row'},
+      h('button',{type:'button',class:'btn small primary',onclick:function(){
+        if(+inX.value===B&&+inY.value===A&&inX.value!==''&&inY.value!==''){fb3.className='fb good';fb3.textContent='Вірно: x = '+B+', y = '+A+'.';mark('t3');}
+        else{fb3.className='fb bad';fb3.textContent='Не збігається. Перегляньте виконання по кроках.';}
+      }},'Перевірити'),
+      h('button',{type:'button',class:'btn small',onclick:function(){if(!stp){stp=makeStepper({a0:A,b0:B,mode:'ref'});holder.append(stp.el);}stp.el.scrollIntoView({block:'nearest'});}},'Показати по кроках'),
+      h('button',{type:'button',class:'btn small',onclick:function(){nums();paint3();}},'Нові числа')),
+    fb3,holder);
+  paint3();
+  /* task 4 */
+  var ia=h('input',{type:'number',inputmode:'numeric',class:'sm',id:'da',value:'17','aria-label':'Ділене'}),ib=h('input',{type:'number',inputmode:'numeric',class:'sm',id:'db',value:'5','aria-label':'Дільник'}),res=h('div',{class:'out'});
+  function calc(){var a=parseInt(ia.value,10),b=parseInt(ib.value,10);
+    if(isNaN(a)||isNaN(b))res.textContent='Введіть цілі числа.';
+    else if(b===0)res.textContent='Ділення на нуль: функцію не можна викликати з b = 0.';
+    else res.textContent='q = '+Math.trunc(a/b)+', r = '+(a%b)+'   →   вивід: '+Math.trunc(a/b)+' '+(a%b);}
+  ia.addEventListener('input',calc);ib.addEventListener('input',calc);calc();
+  var calcBox=h('div',{style:'display:none;flex-direction:column;gap:10px'},
+    codeBlock(['void divMod(int a, int b, int &q, int &r) {','    q = a / b;','    r = a % b;','}','','int main() {','    int q, r;','    divMod(17, 5, q, r);','    cout << q << " " << r;','}']),
+    h('div',{class:'row'},h('label',{for:'da'},'a ='),ia,h('label',{for:'db'},'b ='),ib),res);
+  var t4c=card(h('h2',{},'Завдання 4. Дві відповіді з однієї функції'),
+    h('p',{},'Функція має повернути і цілу частину, і залишок від ділення a на b. Звичайний ',h('code',{html:hl('return')}),' повертає лише одне значення. Який заголовок підійде?'),
+    quizItem({options:['void divMod(int a, int b, int q, int r)','void divMod(int a, int b, int &q, int &r)','void divMod(int &a, int &b, int q, int r)','int divMod(int a, int b)'],correct:1,mono:true,hint:'Які параметри мають змінитися після виклику?',explain:'q і r треба змінити, тому вони за посиланням. a і b лише читаємо.',onSolved:function(){mark('t4');calcBox.style.display='flex';}}),
+    calcBox);
+  /* extra */
+  var ex=h('details',{},h('summary',{},'Додатково для тих, хто встиг'),h('div',{},
+    quizItem({prompt:'Що виведе програма?',code:['void order(int &a, int &b) {','    if (a > b) { int t = a; a = b; b = t; }','}','','int main() {','    int p = 8, q = 2;','    order(p, q);','    cout << p << " " << q;','}'],options:['8 2','2 8','8 8','2 2'],correct:1,mono:true,explain:'order впорядковує змінні за зростанням.'}),
+    quizItem({prompt:'Що станеться при виклику swapGood(3, 5)?',options:['Обміняє числа 3 і 5','Помилка компіляції: літерал не можна передати за посиланням','Виведе 5 3','Скомпілюється, але нічого не зробить'],correct:1,explain:'У 3 і 5 немає імені й місця в пам’яті, посилатись нема на що.'})));
+  w.append(card(h('h2',{},'Практика'),h('div',{class:'row'},prog)),t1c,t2c,t3c,t4c,ex);
+  return w;
+}
+
+/* ---------- step 6: summary ---------- */
+function build6(){
+  var w=h('div',{style:'display:contents'});
+  var tq=[
+    {prompt:'Коли потрібна передача за посиланням?',options:['Коли функція має змінити змінну з викликаючого коду','Коли функція нічого не повертає','Коли параметрів більше двох','Завжди, щоб код працював швидше'],correct:0,explain:'Посилання дає функції доступ до оригіналу.'},
+    {prompt:'Що означає & в int &a?',options:['a — інше ім’я для змінної, переданої у виклику','a — адреса змінної','a — копія змінної','a — константа'],correct:0,explain:'a — псевдонім, а не нова змінна.'},
+    {prompt:'Скільки значень функція може змінити через параметри-посилання?',options:['Лише одне','Лише два','Скільки завгодно','Жодного'],correct:2,explain:'Кожен параметр-посилання дає окремий «вихід» із функції.'}
+  ];
+  w.append(card(h('h2',{},'Головне'),h('ul',{class:'clean'},
+    h('li',{},'За значенням функція працює з копією, оригінал не змінюється.'),
+    h('li',{},'За посиланням функція працює з оригіналом під іншим іменем.'),
+    h('li',{},'Знак ',h('code',{html:hl('&')}),' пишуть у заголовку функції, а у виклику не пишуть.'),
+    h('li',{},'Через параметри-посилання можна змінити кілька змінних одразу.'))),
+    card.apply(null,[h('h2',{},'Міні-тест')].concat(tq.map(function(q){return quizItem(q);}))));
+  var lb=[['good','Зрозуміло'],['warn','Є питання'],['bad','Потрібна допомога']],lbtn=[];
+  var lfb=h('div',{class:'fb',role:'status'});
+  lb.forEach(function(x,i){lbtn.push(h('button',{type:'button','aria-pressed':S.light===x[0],onclick:function(){S.light=x[0];lbtn.forEach(function(b,j){b.setAttribute('aria-pressed',j===i);});save();saveProfile();lfb.textContent='Збережено.';lfb.className='fb good';}},x[1]));});
+  var ta=h('textarea',{id:'refl',style:'min-height:90px;font-family:var(--f-body);font-size:1rem',placeholder:'Передача за посиланням потрібна, коли…','aria-label':'Закінчіть речення'});ta.value=S.reflection;
+  var rfb=h('div',{class:'fb',role:'status'});
+  w.append(card(h('h2',{},'Рефлексія'),
+    h('p',{class:'qt'},'Наскільки зрозуміла тема?'),h('div',{class:'seg',role:'group','aria-label':'Самооцінка'},lbtn),lfb,
+    h('p',{class:'qt'},'Закінчіть речення'),ta,
+    h('div',{class:'row'},h('button',{type:'button',class:'btn small',onclick:function(){S.reflection=ta.value;save();saveProfile();rfb.className='fb good';rfb.textContent='Збережено.';}},'Зберегти')),rfb));
+  return w;
+}
+
+/* ---------- step 7: homework ---------- */
+function build7(){
+  function copyBtn(text){var f=h('span',{class:'empty'});return h('span',{},h('button',{type:'button',class:'btn small',onclick:function(){try{navigator.clipboard.writeText(text).then(function(){f.textContent=' Скопійовано';},function(){f.textContent=' Виділіть код і скопіюйте вручну';});}catch(e){f.textContent=' Виділіть код і скопіюйте вручну';}}},'Копіювати код'),f);}
+  var s1=['#include <iostream>','using namespace std;','','void swap3(int &a, int &b, int &c) {','    // a ← b, b ← c, c ← старе значення a','}','','int main() {','    int a = 1, b = 2, c = 3;','    swap3(a, b, c);','    cout << a << " " << b << " " << c;   // 2 3 1','}'];
+  var s2=['#include <iostream>','using namespace std;','','void minMax(int a, int b, int c, int &mn, int &mx) {','    // запишіть у mn найменше, у mx найбільше','}','','int main() {','    int mn, mx;','    minMax(4, 9, 2, mn, mx);','    cout << mn << " " << mx;   // 2 9','}'];
+  return h('div',{style:'display:contents'},
+    card(h('h2',{},'Домашнє завдання'),h('p',{class:'lead'},'Два завдання на закріплення. Перевірте їх у середовищі розробки.')),
+    card(h('h3',{},'1. Циклічний зсув'),h('p',{},'Напишіть функцію ',h('code',{},'swap3'),', яка зсуває значення трьох змінних по колу: 1 2 3 стає 2 3 1.'),codeBlock(s1),copyBtn(s1.join('\n'))),
+    card(h('h3',{},'2. Мінімум і максимум'),h('p',{},'Напишіть функцію ',h('code',{},'minMax'),', яка знаходить найменше й найбільше з трьох чисел і записує їх у параметри-посилання.'),codeBlock(s2),copyBtn(s2.join('\n'))));
+}
+
+/* ---------- step 8: teacher ---------- */
+function build8(){
+  var w=h('div',{style:'display:contents'});
+  var pw=h('input',{type:'password',id:'tp',placeholder:'Пароль вчителя',autocomplete:'current-password'});
+  pw.value=S.tpass;
+  var msg=h('div',{class:'fb',role:'status'});
+  async function load(){
+    S.tpass=pw.value;
+    if(!S.online){msg.className='fb bad';msg.textContent='Сервер не підключено.';return;}
+    msg.className='fb';msg.textContent='Завантаження…';
+    var r=await safeCall('teacher',{pass:S.tpass},true);
+    if(!r||!r.ok){msg.className='fb bad';msg.textContent=r&&r.error==='auth'?'Невірний пароль.':'Не вдалося отримати дані.';return;}
+    S.tdata=r.rows;renderStep();
+  }
+  w.append(card(h('h2',{},'Панель вчителя'),
+    h('p',{class:'empty'},'Імена бачите лише ви. Усі дані також лежать у вашій таблиці Google Sheets.'),
+    h('label',{for:'tp'},'Пароль'),pw,
+    h('div',{class:'row'},h('button',{type:'button',class:'btn small primary',onclick:load},S.tdata?'Оновити':'Показати')),msg));
+  if(!S.tdata)return w;
+  var list=S.tdata.slice().sort(function(a,b){return String(a.name).localeCompare(String(b.name),'uk');});
+  var subm=list.filter(function(r){return r.auto!==null;});
+  var avg=subm.length?subm.reduce(function(s,r){return s+r.auto;},0)/subm.length:0;
+  var gave=list.filter(function(r){return r.gave;}).length;
+  w.append(card(h('div',{class:'stat'},h('div',{},h('b',{},String(subm.length)),h('span',{},'здали тест')),h('div',{},h('b',{},String(gave)),h('span',{},'перевірили роботу')),h('div',{},h('b',{},subm.length?(Math.round(avg*10)/10)+'/4':'—'),h('span',{},'середнє, закриті')))));
+  var rows=list.length?list.map(function(r){
+    var lt=r.light==='good'?['ok','Зрозуміло']:r.light==='warn'?['wait','Є питання']:r.light==='bad'?['no','Потрібна допомога']:null;
+    return h('tr',{},h('td',{},r.name||'Без імені'),h('td',{class:'num'},r.auto===null?'—':r.auto+'/4'),h('td',{class:'num'},r.open===null?'—':(Math.round(r.open*10)/10)+'/2'),h('td',{class:'num'},r.gave?'так':'ні'),h('td',{},lt?h('span',{class:'pill '+lt[0]},lt[1]):'—'));
+  }):[h('tr',{},h('td',{colspan:'5',class:'empty'},'Поки що немає даних.'))];
+  w.append(card(h('h3',{},'Результати класу'),h('div',{class:'tablewrap'},h('table',{},h('thead',{},h('tr',{},h('th',{},'Учень'),h('th',{class:'num'},'Закриті'),h('th',{class:'num'},'Відкрите'),h('th',{class:'num'},'Перевірив'),h('th',{},'Самооцінка'))),h('tbody',{},rows)))));
+  var rl=list.filter(function(r){return r.reflection;});
+  if(rl.length)w.append(card(h('h3',{},'Рефлексії'),h('ul',{class:'clean'},rl.map(function(r){return h('li',{},h('b',{},(r.name||'Без імені')+': '),r.reflection);}))));
+  var armed=false,cm=h('span',{class:'empty'});
+  var b=h('button',{type:'button',class:'btn danger small',onclick:async function(){
+    if(!armed){armed=true;b.textContent='Точно очистити?';return;}
+    b.disabled=true;var r=await safeCall('clear',{pass:S.tpass},true);
+    if(r&&r.ok){S.tdata=[];renderStep();}else{cm.textContent=' Не вдалося очистити.';b.disabled=false;armed=false;b.textContent='Очистити дані класу';}
+  }},'Очистити дані класу');
+  w.append(card(h('h3',{},'Новий клас'),h('p',{class:'empty'},'Видаляє всі тести, перевірки й імена з таблиці, щоб почати урок з чистого аркуша.'),h('div',{class:'row'},b,cm)));
+  return w;
+}
+
+var BUILD=[build0,build1,build2,build3,build4,build5,build6,build7,build8];
+renderStep();updateNav();syncHH();setStatus();
+initCaps();
+</script>
+</body>
+</html>
